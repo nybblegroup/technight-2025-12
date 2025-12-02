@@ -128,16 +128,67 @@ function generateSDK() {
       stdio: 'inherit'
     });
 
-    generator.on('close', (code) => {
+    generator.on('close', async (code) => {
       if (code === 0) {
         console.log('✓ SDK generated successfully from Python backend!');
-        resolve();
+        
+        // Compile the SDK
+        console.log('Compiling SDK...');
+        try {
+          await compileSDK();
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
       } else {
         reject(new Error(`SDK generation failed with code ${code}`));
       }
     });
 
     generator.on('error', (error) => {
+      reject(error);
+    });
+  });
+}
+
+// Function to compile SDK
+function compileSDK() {
+  return new Promise((resolve, reject) => {
+    console.log('Installing SDK dependencies and compiling...');
+    
+    // Install dependencies and build
+    const build = spawn('npm', ['install'], {
+      cwd: SDK_OUTPUT_DIR,
+      shell: true,
+      stdio: 'inherit'
+    });
+
+    build.on('close', (code) => {
+      if (code === 0) {
+        const compile = spawn('npm', ['run', 'build'], {
+          cwd: SDK_OUTPUT_DIR,
+          shell: true,
+          stdio: 'inherit'
+        });
+
+        compile.on('close', (compileCode) => {
+          if (compileCode === 0) {
+            console.log('✓ SDK compiled successfully!');
+            resolve();
+          } else {
+            reject(new Error(`SDK compilation failed with code ${compileCode}`));
+          }
+        });
+
+        compile.on('error', (error) => {
+          reject(error);
+        });
+      } else {
+        reject(new Error(`SDK dependency installation failed with code ${code}`));
+      }
+    });
+
+    build.on('error', (error) => {
       reject(error);
     });
   });

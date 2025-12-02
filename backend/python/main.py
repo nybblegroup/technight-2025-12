@@ -2,11 +2,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from datetime import datetime
+from pydantic import BaseModel
+from typing import Optional
 import os
 import yaml
 from dotenv import load_dotenv
 import signal
 import sys
+import uvicorn
+from database import check_database_connection
 
 # Load environment variables
 load_dotenv()
@@ -32,7 +36,23 @@ app.add_middleware(
 )
 
 
-@app.get("/api/health", tags=["Health"])
+# Response models
+class HealthResponse(BaseModel):
+    status: str
+    timestamp: datetime
+
+
+class DatabaseHealthResponse(BaseModel):
+    """
+    Database health check response model
+    """
+    connected: bool
+    message: Optional[str] = None
+    error: Optional[str] = None
+    timestamp: datetime
+
+
+@app.get("/api/health", tags=["Health"], operation_id="apiHealthGet", response_model=HealthResponse)
 async def health_check():
     """
     Health check endpoint
@@ -40,11 +60,37 @@ async def health_check():
     Returns the health status of the API
 
     Returns:
-        dict: Health status with timestamp
+        HealthResponse: Health status with timestamp
     """
     return {
         "status": "ok",
-        "timestamp": datetime.utcnow().isoformat() + "Z"
+        "timestamp": datetime.utcnow()
+    }
+
+
+@app.get("/api/health/db", tags=["Health"], operation_id="apiHealthDbGet", response_model=DatabaseHealthResponse)
+async def health_check_db():
+    """
+    Database connectivity check endpoint
+
+    Verifies the connection status to the PostgreSQL database.
+    Checks if the database is accessible and responding to queries.
+
+    Returns:
+        DatabaseHealthResponse: Database connection status with details
+        
+    Example responses:
+        - Success: {"connected": true, "message": "Database connection successful", "timestamp": "..."}
+        - Error: {"connected": false, "error": "Connection error details", "timestamp": "..."}
+        - Not configured: {"connected": false, "error": "DATABASE_URL not set", "timestamp": "..."}
+    """
+    db_status = check_database_connection()
+    
+    return {
+        "connected": db_status["connected"],
+        "message": db_status.get("message"),
+        "error": db_status.get("error"),
+        "timestamp": datetime.utcnow()
     }
 
 
@@ -70,7 +116,6 @@ signal.signal(signal.SIGINT, handle_shutdown)
 
 
 if __name__ == "__main__":
-    import uvicorn
 
     print(f"Server is running on http://localhost:{PORT}")
     print(f"Swagger UI available at http://localhost:{PORT}/api/swagger")
