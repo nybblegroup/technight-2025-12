@@ -2,13 +2,15 @@
 
 ## Objetivo
 
-Desarrollar una experiencia via web app visualmente atractiva con **gamificación** y **mucho IA** 😂 para la recepción de encuestas/feedback de eventos/reuniones/webinars, medir participación y/o asistencia para utilizar durante la misma en todas las presentaciones de NYBBLE GROUP integrable a nuestro hub como un espacio social.
+Desarrollar una experiencia via web app visualmente atractiva con **gamificación** y **mucho IA** 😂 para la recepción de encuestas/feedback/votacion de eventos/reuniones/webinars, medir participación y/o asistencia para utilizar durante la misma en todas las presentaciones de NYBBLE GROUP integrable a nuestro hub como un espacio social.
 
 ### Características Principales
 
-- La idea es cubrir con el app todo el ciclo de vida de un evento/reunion desde el PRE/DURANTE/POST por medio del app generando engagement en los participantes
+- La idea es generar/medir/obtener engagement y feedback de los eventos e iniciativas en general por medio de gamificacion y experiencias sociales
+- Es importante permita cubrir todo el ciclo del PRE/DURANTE/POST de la reunion y evento de forma unica y diferencial a la NYBBLE WAY!
+- Asociar el web app con una reunion de calendario de algun modo para segmentar por cada experiencia.
+- La aplicacion debe ser independiente (poder compartirse a externos de Nybble Group es clave en webinars) por evento (pero el dashboard sera privado luego)
 - Piensa opciones **dinámicas** con feedback recurrente y poder reiterar el mismo que sean **divertidas** y a su vez traigan **información de valor**
-- Asociar el web app con la reunion de calendario de algun modo para crear nuevas experiencias.
 - Puede ser algo genérico pero sería bueno que el app realice algunas que otras **preguntas incisivas** (o las invente) en base a lo que pasó !?
 - Puedes simular comunicación con **Slack** para ciertas interacciones pero debe tener una **interfase gráfica ÚNICA**
 - No sólo puedes preguntar sino **inferir datos** desde otros sistemas:
