@@ -30,6 +30,8 @@ Debe tener al menos un **dashboard amigable** para ver las estadísticas y lo qu
 
 **El mejor trabajo (votado entre todos) será integrado en el nuevo Nybble Hub como iniciativa de innovación durante 2026 y estará disponible el acceso para todos**
 
+<img width="1421" height="752" alt="image" src="https://github.com/user-attachments/assets/0c0cecfb-2470-48cb-aba1-e7a1674c9a75" />
+
 ---
 
 ## Cronograma y Entrega
@@ -46,7 +48,8 @@ La misma debe ser desarrollada **íntegramente con AI** por medio de modo agént
 
 | Fase | Duración | Descripción |
 |------|----------|-------------|
-| **Ideación + Documentación** | ~1 hora | Definir alcance y planeamiento |
+| **KickOff** | 15 min | Definición del Tech Challenge |
+| **Ideación + Discovery** | 45 min | Definir alcance y planeamiento |
 | **Ejecución con IA** | ~1 hora | Creación por medio de IA |
 | **Break** | 15-20 min | Pausa para preparar presentaciones |
 | **Presentaciones** | ~40 min | Demos y votación |
@@ -58,6 +61,7 @@ La misma debe ser desarrollada **íntegramente con AI** por medio de modo agént
 - Determinar las tareas a realizar cuando tengan claro el alcance de tu proyecto
 - Debajo dejamos un **PROMPT de base** que puedes utilizar
 - Documentar alcance y planeamiento
+- Evalua si realizaras todo en un solo prompt o ejecutaras cada historia por separado
 
 #### 2. Modo EJECUCIÓN 🚀
 
@@ -107,13 +111,21 @@ Elegir la tecnología de API/BACKEND que más puedan trabajar según el equipo y
 
 ### 3. Herramientas de IA Permitidas
 
-Debes únicamente utilizar estas tecnologías para trabajar en modo agéntico:
+Debes únicamente utilizar una de estas tecnologías para trabajar en modo agéntico:
 
 | Herramienta | Descripción |
 |-------------|-------------|
 | **Cursor Agent mode** 👍 | Modo agente de Cursor |
+
+<img width="1057" height="461" alt="image" src="https://github.com/user-attachments/assets/227743e3-5ca7-422d-9fd4-17a4559cc426" />
+
 | **Gemini CLI** 👏 | Google Gemini en línea de comandos |
-| **OpenAI Codex / Claude Code** ➕ | Si lo tienes en tu stack y lo prefieren |
+
+<img width="1324" height="476" alt="image" src="https://github.com/user-attachments/assets/a74c88c1-897e-4a89-a3f5-8e19b35cbcac" />
+
+| **OpenAI Codex / Claude Code** ➕ | Si lo tienes en tu stack y lo prefieres para esta technight! |
+
+<img width="1336" height="194" alt="image" src="https://github.com/user-attachments/assets/5409584b-7810-4206-b718-66e263b595c9" />
 
 ### 4. Base de Datos
 
