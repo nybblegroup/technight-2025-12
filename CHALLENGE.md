@@ -59,7 +59,7 @@ La misma debe ser desarrollada **íntegramente con AI** por medio de modo agént
 #### 1. Modo PLANEAMIENTO 📋
 
 - Determinar las tareas a realizar cuando tengan claro el alcance de tu proyecto
-- Debajo dejamos un **PROMPT de base** que puedes utilizar
+- Debajo dejamos un **PROMPT de base** que puedes utilizar: [SPEC_PROMPT.md](./SPEC_PROMPT.md)
 - Documentar alcance y planeamiento
 - Evalua si realizaras todo en un solo prompt o ejecutaras cada historia por separado
 
