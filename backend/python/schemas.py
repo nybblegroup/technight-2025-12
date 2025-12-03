@@ -1,73 +1,280 @@
 """
-Pydantic schemas (DTOs) for request/response validation
+Pydantic schemas for request/response validation
+
+Defines data models for API inputs and outputs.
 """
-from pydantic import BaseModel, Field
-from typing import Optional
+
 from datetime import datetime
+from typing import List, Optional, Dict, Any
+from pydantic import BaseModel, Field, validator
+from uuid import UUID
 
 
-class ExampleResponse(BaseModel):
-    """
-    Response schema for Example entity
-    """
-    id: int
-    name: str
-    title: str
-    entryDate: datetime = Field(..., alias="entry_date")
-    description: Optional[str] = None
-    isActive: bool = Field(..., alias="is_active")
+# ============================================================================
+# Event Schemas
+# ============================================================================
+
+class AgendaItemBase(BaseModel):
+    title: str = Field(..., min_length=1, max_length=255)
+    duration: int = Field(..., gt=0, description="Duration in minutes")
+    presenter: Optional[str] = Field(None, max_length=255)
+    position: int = Field(..., ge=0)
+
+
+class AgendaItemCreate(AgendaItemBase):
+    pass
+
+
+class AgendaItemResponse(AgendaItemBase):
+    id: UUID
+    event_id: UUID
+    created_at: datetime
     
     class Config:
         from_attributes = True
-        populate_by_name = True
-        json_schema_extra = {
-            "example": {
-                "id": 1,
-                "name": "First Example",
-                "title": "Introduction",
-                "entryDate": "2025-12-02T12:00:00Z",
-                "description": "This is the first example entry",
-                "isActive": True
-            }
-        }
 
 
-class CreateExampleDto(BaseModel):
-    """
-    DTO for creating a new Example
-    """
-    name: str = Field(..., min_length=1, max_length=200, description="Name of the example")
-    title: str = Field(..., min_length=1, max_length=200, description="Title of the example")
-    description: Optional[str] = Field(None, max_length=1000, description="Optional description field")
-    isActive: Optional[bool] = Field(True, description="Indicates if the example is active")
+class EventSettings(BaseModel):
+    allow_anonymous_questions: bool = True
+    show_leaderboard: bool = True
+    require_preparation: bool = False
+    enable_ai_questions: bool = False
+
+
+class EventBase(BaseModel):
+    title: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    start_time: datetime
+    end_time: datetime
+    meeting_url: Optional[str] = None
+    settings: Optional[EventSettings] = EventSettings()
+    
+    @validator('end_time')
+    def end_time_must_be_after_start_time(cls, v, values):
+        if 'start_time' in values and v <= values['start_time']:
+            raise ValueError('end_time must be after start_time')
+        return v
+
+
+class EventCreate(EventBase):
+    agenda_items: Optional[List[AgendaItemCreate]] = []
+
+
+class EventUpdate(BaseModel):
+    title: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    meeting_url: Optional[str] = None
+    settings: Optional[EventSettings] = None
+
+
+class EventPhaseUpdate(BaseModel):
+    phase: str = Field(..., pattern="^(pre|live|post|closed)$")
+
+
+class EventResponse(EventBase):
+    id: UUID
+    phase: str
+    created_by: UUID
+    created_at: datetime
+    updated_at: datetime
+    agenda_items: List[AgendaItemResponse] = []
     
     class Config:
-        json_schema_extra = {
-            "example": {
-                "name": "My Example",
-                "title": "Example Title",
-                "description": "Optional description",
-                "isActive": True
-            }
-        }
+        from_attributes = True
 
 
-class UpdateExampleDto(BaseModel):
-    """
-    DTO for updating an existing Example (all fields optional)
-    """
-    name: Optional[str] = Field(None, min_length=1, max_length=200, description="Name of the example")
-    title: Optional[str] = Field(None, min_length=1, max_length=200, description="Title of the example")
-    description: Optional[str] = Field(None, max_length=1000, description="Optional description field")
-    isActive: Optional[bool] = Field(None, description="Indicates if the example is active")
+class EventSummary(BaseModel):
+    """Simplified event response for lists"""
+    id: UUID
+    title: str
+    phase: str
+    start_time: datetime
+    end_time: datetime
+    participant_count: int = 0
+    active_polls_count: int = 0
     
     class Config:
-        json_schema_extra = {
-            "example": {
-                "name": "Updated Name",
-                "title": "Updated Title",
-                "description": "Updated description",
-                "isActive": False
-            }
-        }
+        from_attributes = True
 
+
+# ============================================================================
+# Poll Schemas
+# ============================================================================
+
+class PollOptionBase(BaseModel):
+    text: str = Field(..., min_length=1, max_length=255)
+    position: int = Field(..., ge=0)
+
+
+class PollOptionCreate(PollOptionBase):
+    pass
+
+
+class PollOptionResponse(PollOptionBase):
+    id: UUID
+    votes: int = 0
+    percentage: Optional[float] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class PollBase(BaseModel):
+    question: str = Field(..., min_length=1)
+    show_results_to: str = Field(default='voted', pattern="^(all|voted|admin)$")
+
+
+class PollCreate(PollBase):
+    options: List[PollOptionCreate] = Field(..., min_items=2, max_items=10)
+    
+    @validator('options')
+    def validate_options(cls, v):
+        if len(v) < 2:
+            raise ValueError('Poll must have at least 2 options')
+        if len(v) > 10:
+            raise ValueError('Poll cannot have more than 10 options')
+        return v
+
+
+class PollStatusUpdate(BaseModel):
+    status: str = Field(..., pattern="^(draft|active|closed)$")
+
+
+class PollResponse(PollBase):
+    id: UUID
+    event_id: UUID
+    status: str
+    created_at: datetime
+    closed_at: Optional[datetime] = None
+    options: List[PollOptionResponse] = []
+    total_votes: int = 0
+    
+    class Config:
+        from_attributes = True
+
+
+class PollVoteCreate(BaseModel):
+    participant_id: UUID
+    option_id: UUID
+
+
+class PollVoteResponse(BaseModel):
+    id: UUID
+    poll_id: UUID
+    option_id: UUID
+    participant_id: UUID
+    timestamp: datetime
+    points_earned: int = 15
+    
+    class Config:
+        from_attributes = True
+
+
+# ============================================================================
+# Participant Schemas
+# ============================================================================
+
+class ParticipantBase(BaseModel):
+    display_name: str = Field(..., min_length=1, max_length=255)
+
+
+class ParticipantCreate(ParticipantBase):
+    avatar: Optional[str] = '🤖'
+
+
+class ReactionCreate(BaseModel):
+    emoji: str = Field(..., min_length=1, max_length=10)
+    
+    @validator('emoji')
+    def validate_emoji(cls, v):
+        allowed_emojis = ['🔥', '👏', '💡', '🤔', '❤️', '🚀']
+        if v not in allowed_emojis:
+            raise ValueError(f'Emoji must be one of: {", ".join(allowed_emojis)}')
+        return v
+
+
+class QuestionCreate(BaseModel):
+    text: str = Field(..., min_length=1)
+    is_anonymous: bool = False
+
+
+class FeedbackCreate(BaseModel):
+    rating: int = Field(..., ge=1, le=5)
+    goal_achieved: Optional[str] = Field(None, pattern="^(yes|partially|no)$")
+    feedback: Optional[str] = None
+
+
+class ParticipantStats(BaseModel):
+    total_points: int
+    rank: int
+    attendance_percent: int
+    reactions_count: int
+    questions_count: int
+    polls_voted: int
+    badges: List[str] = []
+
+
+class ParticipantResponse(ParticipantBase):
+    id: UUID
+    event_id: UUID
+    avatar: str
+    join_time: Optional[datetime] = None
+    points: int = 0
+    rank: Optional[int] = None
+    badges: List[str] = []
+    
+    class Config:
+        from_attributes = True
+
+
+class ParticipantDetail(ParticipantResponse):
+    """Extended participant info for admin"""
+    attendance_percent: int
+    poll_votes_count: int
+    rating: Optional[int] = None
+    goal_achieved: Optional[str] = None
+    feedback: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class QuestionResponse(BaseModel):
+    id: UUID
+    text: str
+    is_anonymous: bool
+    timestamp: datetime
+    author_name: Optional[str] = None  # None if anonymous
+    
+    class Config:
+        from_attributes = True
+
+
+class ActionResponse(BaseModel):
+    """Generic response for participant actions"""
+    success: bool = True
+    message: str
+    points_earned: int
+    total_points: int
+    new_rank: Optional[int] = None
+
+
+# ============================================================================
+# Health Check
+# ============================================================================
+
+class HealthResponse(BaseModel):
+    status: str = "ok"
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    database: str = "connected"
+
+
+# ============================================================================
+# Error Response
+# ============================================================================
+
+class ErrorResponse(BaseModel):
+    detail: str
+    error_code: Optional[str] = None
+    timestamp: datetime = Field(default_factory=datetime.utcnow)

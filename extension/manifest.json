@@ -1,0 +1,62 @@
+{
+  "manifest_version": 3,
+  "name": "Nybble Vibe - Event Engagement",
+  "version": "1.0.0",
+  "description": "Transform virtual meetings into gamified, interactive experiences with polls, reactions, and real-time engagement tracking",
+  
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  
+  "host_permissions": [
+    "https://meet.google.com/*",
+    "http://localhost:8080/*"
+  ],
+  
+  "action": {
+    "default_popup": "sidebar/index.html",
+    "default_icon": {
+      "16": "assets/icons/icon-16.png",
+      "48": "assets/icons/icon-48.png",
+      "128": "assets/icons/icon-128.png"
+    }
+  },
+  
+  "icons": {
+    "16": "assets/icons/icon-16.png",
+    "48": "assets/icons/icon-48.png",
+    "128": "assets/icons/icon-128.png"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["https://meet.google.com/*"],
+      "js": ["content/inject.js"],
+      "css": ["content/styles.css"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+  
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "sidebar/index.html",
+        "sidebar/app.js",
+        "sidebar/components/*.js",
+        "sidebar/services/*.js",
+        "assets/icons/*"
+      ],
+      "matches": ["https://meet.google.com/*"]
+    }
+  ],
+  
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
+

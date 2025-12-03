@@ -1,0 +1,27 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="#6366F1"/>
+  
+  <!-- Game controller shape -->
+  <g transform="translate(32, 44)">
+    <!-- Left pad -->
+    <rect x="0" y="12" width="20" height="4" rx="2" fill="white"/>
+    <rect x="8" y="4" width="4" height="20" rx="2" fill="white"/>
+    
+    <!-- Right buttons -->
+    <circle cx="48" cy="10" r="4" fill="white"/>
+    <circle cx="56" cy="14" r="4" fill="white"/>
+    <circle cx="44" cy="18" r="4" fill="white"/>
+    <circle cx="52" cy="22" r="4" fill="white"/>
+  </g>
+  
+  <!-- Trophy icon -->
+  <g transform="translate(50, 70)">
+    <path d="M 14 2 L 14 8 C 14 12 10 14 8 14 L 6 14 L 6 16 L 10 16 C 12 16 14 18 14 20 L 14 22 L 22 22 L 22 20 C 22 18 24 16 26 16 L 30 16 L 30 14 L 28 14 C 26 14 22 12 22 8 L 22 2 Z" fill="#22D3EE"/>
+    <rect x="16" y="0" width="4" height="4" fill="#22D3EE"/>
+  </g>
+  
+  <!-- Border -->
+  <circle cx="64" cy="64" r="60" stroke="#4F46E5" stroke-width="4" fill="none"/>
+</svg>
+

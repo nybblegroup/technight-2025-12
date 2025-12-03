@@ -21,6 +21,8 @@ if DATABASE_URL:
         DATABASE_URL,
         pool_pre_ping=True,  # Verify connections before using them
         pool_recycle=3600,   # Recycle connections after 1 hour
+        pool_size=10,        # Number of connections to maintain
+        max_overflow=20,     # Max connections beyond pool_size
     )
 else:
     engine = None
@@ -102,4 +104,23 @@ def check_database_connection() -> dict:
             "connected": False,
             "error": f"Unexpected error: {error_str}"
         }
+
+
+def create_tables():
+    """
+    Create all database tables
+    
+    Note: This will be called from main.py on startup to ensure tables exist.
+    """
+    if not engine:
+        raise RuntimeError("Database not configured. Please set DATABASE_URL environment variable.")
+    
+    # Import models to ensure they're registered with Base
+    try:
+        import models  # noqa: F401
+    except ImportError:
+        pass  # Models might already be imported
+    
+    Base.metadata.create_all(bind=engine)
+    print("✅ Database tables created successfully")
 
