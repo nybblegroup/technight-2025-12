@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { healthApi } from './utils/api';
+import { api } from './utils/api';
 
 interface HealthStatus {
   status: 'loading' | 'success' | 'error';
@@ -14,14 +14,14 @@ function App() {
   });
 
   useEffect(() => {
-    // Check backend health using configured API client
-    healthApi.apiHealthGet()
+    // Check backend health using direct API client
+    api.health.get()
       .then(data => {
         console.log('Backend health check successful:', data);
         setBackendHealth({
           status: 'success',
           message: 'Connected successfully',
-          timestamp: data.timestamp?.toISOString()
+          timestamp: data.timestamp
         });
       })
       .catch(err => {

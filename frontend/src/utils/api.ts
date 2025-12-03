@@ -1,15 +1,58 @@
-import { Configuration, HealthApi } from '@technight/api';
-
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:6173';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:6173';
 
-// Create API Configuration
-const apiConfig = new Configuration({
-  basePath: API_BASE_URL
-});
+// Type definitions for API responses
+export interface HealthResponse {
+  status: string;
+  timestamp: string;
+}
 
-// Export configured API clients
-export const healthApi = new HealthApi(apiConfig);
+export interface ApiError {
+  message: string;
+  status?: number;
+}
 
-// Export configuration for advanced usage
-export { apiConfig, API_BASE_URL };
+// Generic fetch helper with error handling
+async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const url = `${API_BASE_URL}${endpoint}`;
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('An unknown error occurred');
+  }
+}
+
+// API Methods
+export const api = {
+  // Health check endpoint
+  health: {
+    get: () => apiFetch<HealthResponse>('/api/health'),
+  },
+
+  // Add more API methods here as needed
+  // Example:
+  // users: {
+  //   getAll: () => apiFetch<User[]>('/api/users'),
+  //   getById: (id: string) => apiFetch<User>(`/api/users/${id}`),
+  //   create: (data: CreateUserDto) => apiFetch<User>('/api/users', {
+  //     method: 'POST',
+  //     body: JSON.stringify(data),
+  //   }),
+  // },
+};

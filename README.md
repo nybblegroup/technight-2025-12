@@ -1,6 +1,6 @@
 # Technight 2025-12 Monorepo
 
-A minimal monorepo setup with frontend (React + Vite), dual backend options (Node/Express + TypeScript + Prisma OR Python/FastAPI), and automatic SDK generation from either backend.
+A minimal monorepo setup with frontend (React + Vite) and dual backend options (Node/Express + TypeScript + Prisma OR Python/FastAPI). The frontend connects directly to the backend APIs.
 
 ## Architecture Diagram
 
@@ -8,11 +8,6 @@ A minimal monorepo setup with frontend (React + Vite), dual backend options (Nod
 graph TB
     subgraph "Frontend :5173"
         FE[React + Vite + TypeScript]
-    end
-
-    subgraph "SDK Generation"
-        SDK[TypeScript SDK<br/>@technight/api]
-        OAG[OpenAPI Generator]
     end
 
     subgraph "Backend Options"
@@ -33,16 +28,8 @@ graph TB
         DB[(PostgreSQL)]
     end
 
-    FE -->|HTTP Requests| SDK
-    SDK -.->|Option 1| NODE
-    SDK -.->|Option 2| PYTHON
-
-    NODE --> SWAGGER_NODE
-    PYTHON --> SWAGGER_PY
-
-    SWAGGER_NODE -->|OpenAPI Spec| OAG
-    SWAGGER_PY -->|OpenAPI Spec| OAG
-    OAG -->|Generates| SDK
+    FE -->|Direct HTTP Requests<br/>fetch API| NODE
+    FE -.->|Direct HTTP Requests<br/>fetch API| PYTHON
 
     NODE --> PRISMA
     PYTHON --> SQLALCHEMY
@@ -52,18 +39,17 @@ graph TB
     style FE fill:#61dafb,stroke:#333,stroke-width:2px
     style NODE fill:#68a063,stroke:#333,stroke-width:2px
     style PYTHON fill:#3776ab,stroke:#333,stroke-width:2px
-    style SDK fill:#3178c6,stroke:#333,stroke-width:2px
     style DB fill:#336791,stroke:#333,stroke-width:2px
 ```
 
 **Key Points:**
-- **Frontend** consumes the auto-generated TypeScript SDK
-- **SDK** is generated from either backend's OpenAPI specification
+- **Frontend** connects directly to backends using fetch API
 - **Node Backend** uses Prisma ORM for database operations
 - **Python Backend** uses SQLAlchemy ORM for database operations
 - Both backends connect to **PostgreSQL** database
 - Both backends expose **Swagger UI** for interactive API documentation
 - Backends can run **simultaneously** on different ports
+- API base URL is **configurable** via environment variables
 
 ## Project Structure
 
@@ -72,17 +58,16 @@ technight-2025-12/
 ├── backend/
 │   ├── node/            # Express + TypeScript backend with Swagger
 │   │   ├── prisma/      # Prisma schema and migrations
-│   │   ├── scripts/     # SDK generation script
 │   │   └── server.ts    # Main entry point
 │   └── python/          # FastAPI + Python backend with Swagger
-│       ├── scripts/     # SDK generation script
 │       ├── database.py  # SQLAlchemy database configuration
 │       └── main.py      # Main entry point
 ├── frontend/            # React + Vite + TypeScript
 │   └── src/
+│       ├── utils/
+│       │   └── api.ts   # API client with direct fetch calls
 │       ├── App.tsx      # Main app component
 │       └── main.tsx     # Entry point
-├── sdk/ts/              # Auto-generated TypeScript SDK
 └── package.json         # Root monorepo configuration
 ```
 
@@ -107,12 +92,8 @@ technight-2025-12/
 - **Framework**: React 19
 - **Build Tool**: Vite 6
 - **Language**: TypeScript 5.6
+- **API Client**: Native fetch API
 - **Port**: 5173
-
-### SDK
-- **Generator**: OpenAPI Generator (typescript-fetch)
-- **Package**: @technight/api
-- **Auto-generated**: From either Node or Python backend OpenAPI spec
 
 ## Requirements
 
@@ -263,16 +244,15 @@ npm run dev:python
   pip install -r requirements.txt
   ```
 
-## Manual Setup Guide (Python Backend + SDK + Frontend)
+## Manual Setup Guide (Python Backend + Frontend)
 
-This guide explains how to manually set up the Python backend, generate the SDK, and run the frontend without using the automated script. Follow these steps for **macOS**, **Windows**, or **Linux**.
+This guide explains how to manually set up the Python backend and run the frontend. Follow these steps for **macOS**, **Windows**, or **Linux**.
 
 ### Prerequisites
 
 - **Python**: >= 3.12
 - **Node.js**: >= 20.19.4
 - **npm**: >= 10.0.0
-- **Java**: >= 17 (for SDK generation) OR Docker (alternative)
 
 ### Step 1: Install System Dependencies for PostgreSQL
 
@@ -519,59 +499,7 @@ The Python backend uses `psycopg2-binary` which requires system-level PostgreSQL
 
    This tells the frontend to connect to the Python backend on port 6174.
 
-### Step 7: Generate SDK from Python Backend
-
-The SDK is required for the frontend to communicate with the backend. It's generated from the OpenAPI specification.
-
-#### Option A: Using Java (Recommended)
-
-1. **Install Java 17 or higher**:
-   - **macOS**: `brew install openjdk@17`
-   - **Linux (Debian/Ubuntu)**: `sudo apt-get install openjdk-17-jdk`
-   - **Linux (RHEL/CentOS)**: `sudo yum install java-17-openjdk-devel`
-   - **Windows**: Download from [Adoptium](https://adoptium.net/) or use Chocolatey: `choco install openjdk17`
-
-2. **Verify Java installation**:
-   ```bash
-   java -version
-   ```
-
-3. **Generate SDK**:
-   ```bash
-   # From project root
-   npm run sdk:generate:python
-   ```
-
-   This will:
-   - Start the Python backend on a temporary port (7174)
-   - Wait for it to be ready
-   - Generate the SDK to `sdk/ts/`
-   - Compile the SDK
-   - Stop the temporary server
-
-#### Option B: Using Docker
-
-1. **Install Docker**:
-   - **macOS**: [Docker Desktop](https://www.docker.com/products/docker-desktop)
-   - **Linux**: Follow [Docker installation guide](https://docs.docker.com/engine/install/)
-   - **Windows**: [Docker Desktop](https://www.docker.com/products/docker-desktop)
-
-2. **Configure Docker in `openapitools.json`**:
-   ```json
-   {
-     "generator-cli": {
-       "version": "7.0.0",
-       "useDocker": true
-     }
-   }
-   ```
-
-3. **Generate SDK**:
-   ```bash
-   npm run sdk:generate:python
-   ```
-
-### Step 8: Run the Python Backend
+### Step 7: Run the Python Backend
 
 1. **Navigate to Python backend directory**:
    ```bash
@@ -608,7 +536,7 @@ The SDK is required for the frontend to communicate with the backend. It's gener
    - Open http://localhost:6174/api/health in your browser
    - You should see: `{"status":"ok","timestamp":"..."}`
 
-### Step 9: Run the Frontend
+### Step 8: Run the Frontend
 
 1. **Open a new terminal** (keep the backend running in the first terminal)
 
@@ -651,12 +579,6 @@ The SDK is required for the frontend to communicate with the backend. It's gener
 - Make sure PostgreSQL is installed and in PATH
 - Verify with: `pg_config --version`
 - If using vcpkg, make sure OpenSSL is properly linked
-
-#### Issue: SDK generation fails
-
-- **Java not found**: Install Java 17+ and verify with `java -version`
-- **Docker not running**: Start Docker Desktop or use Java instead
-- **Backend not starting**: Check if port 7174 is available, or manually start the backend first
 
 #### Issue: Frontend can't connect to backend
 
@@ -795,26 +717,18 @@ npm run dev:frontend
 - **OpenAPI JSON**: http://localhost:6174/api/openapi.json
 - **OpenAPI YAML**: http://localhost:6174/api/openapi.yaml
 
-### Generate SDK
+### API Documentation
 
-The SDK can be generated from either backend's OpenAPI specification:
+Both backends provide Swagger UI for interactive API documentation:
 
-```bash
-# Generate from Node backend (default)
-npm run sdk:generate
+- **Node Backend**: http://localhost:6173/api/swagger
+- **Python Backend**: http://localhost:6174/api/swagger
 
-# Generate from Node backend (explicit)
-npm run sdk:generate:node
-
-# Generate from Python backend
-npm run sdk:generate:python
-```
-
-Each script will:
-1. Start the respective backend server on a temporary port (7173 for Node, 7174 for Python)
-2. Wait for the health check endpoint
-3. Generate the SDK to `sdk/ts/`
-4. Stop the server
+You can also view the OpenAPI specifications:
+- **Node Backend JSON**: http://localhost:6173/api/openapi.json
+- **Node Backend YAML**: http://localhost:6173/api/openapi.yaml
+- **Python Backend JSON**: http://localhost:6174/api/openapi.json
+- **Python Backend YAML**: http://localhost:6174/api/openapi.yaml
 
 ### Build for Production
 
@@ -831,7 +745,7 @@ npm run build:frontend
 
 ### Node Backend
 
-1. Add your endpoint in `backend/node/server.ts` with JSDoc comments:
+Add your endpoint in `backend/node/server.ts` with JSDoc comments for Swagger documentation:
 
 ```typescript
 /**
@@ -848,15 +762,9 @@ app.get('/api/users', (req, res) => {
 });
 ```
 
-2. Regenerate the SDK:
-
-```bash
-npm run sdk:generate:node
-```
-
 ### Python Backend
 
-1. Add your endpoint in `backend/python/main.py`:
+Add your endpoint in `backend/python/main.py`:
 
 ```python
 @app.get("/api/users", tags=["Users"])
@@ -869,23 +777,43 @@ async def get_users():
     return {"users": []}
 ```
 
-2. Regenerate the SDK:
+### Using the API in Frontend
 
-```bash
-npm run sdk:generate:python
-```
-
-### Using the SDK in Frontend
+1. **Add type definition** in `frontend/src/utils/api.ts`:
 
 ```typescript
-import { Configuration, HealthApi } from '@technight/api';
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+```
 
-const config = new Configuration({
-  basePath: 'http://localhost:6173'  // or 6174 for Python
-});
+2. **Add API method** in `frontend/src/utils/api.ts`:
 
-const healthApi = new HealthApi(config);
-const response = await healthApi.apiHealthGet();
+```typescript
+export const api = {
+  health: {
+    get: () => apiFetch<HealthResponse>('/api/health'),
+  },
+  users: {
+    getAll: () => apiFetch<User[]>('/api/users'),
+    getById: (id: string) => apiFetch<User>(`/api/users/${id}`),
+    create: (data: Omit<User, 'id'>) => apiFetch<User>('/api/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  },
+};
+```
+
+3. **Use in components**:
+
+```typescript
+import { api } from './utils/api';
+
+// In your component
+const users = await api.users.getAll();
 ```
 
 ## Database Setup
@@ -966,5 +894,7 @@ async def get_users(db: Session = Depends(get_db)):
 - Node backend includes Prisma ORM with empty schema
 - Python backend includes SQLAlchemy ORM with database module
 - Both backends support PostgreSQL with their respective ORMs
-- SDK can be generated from either backend
+- Frontend uses native fetch API for direct backend communication
+- API base URL is configurable via `VITE_API_BASE_URL` environment variable
 - Python backend includes database health check endpoint (`/api/health/db`)
+- Both backends provide Swagger UI for API documentation
