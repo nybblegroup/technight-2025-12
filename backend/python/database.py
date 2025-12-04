@@ -80,7 +80,16 @@ def check_database_connection() -> dict:
         
         # Categorize common errors for better user experience
         if "invalid dsn" in error_str.lower() or "invalid connection option" in error_str.lower():
-            error_msg = f"Invalid database connection string: {error_str}. Please check your DATABASE_URL format."
+            # Check for specific common issues
+            if "schema" in error_str.lower():
+                error_msg = (
+                    "Invalid DATABASE_URL: PostgreSQL does not accept 'schema' as a connection parameter.\n"
+                    "Remove '?schema=public' from your DATABASE_URL.\n"
+                    "Correct format: postgresql://user:password@host:port/database\n"
+                    "Example: postgresql://postgres:password@localhost:5432/technightdb"
+                )
+            else:
+                error_msg = f"Invalid database connection string: {error_str}. Please check your DATABASE_URL format."
         elif "could not connect" in error_str.lower() or "connection refused" in error_str.lower():
             error_msg = f"Could not connect to database server: {error_str}. Is PostgreSQL running?"
         elif "authentication failed" in error_str.lower() or "password authentication failed" in error_str.lower():
@@ -111,6 +120,9 @@ def create_tables():
     Create all database tables
     
     Note: This will be called from main.py on startup to ensure tables exist.
+    
+    Raises:
+        RuntimeError: If DATABASE_URL is not configured
     """
     if not engine:
         raise RuntimeError("Database not configured. Please set DATABASE_URL environment variable.")

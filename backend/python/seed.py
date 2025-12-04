@@ -2,9 +2,16 @@
 Seed database with test data for Nybble Vibe MVP
 
 Usage:
-    python seed.py              # Seed data with default phase (live)
-    python seed.py --reset      # Drop all data and reseed
-    python seed.py --phase pre  # Create event in specific phase
+    # Opción 1: Usar el script wrapper (recomendado)
+    ./seed.sh                    # Seed data with default phase (live)
+    ./seed.sh --reset            # Drop all data and reseed
+    ./seed.sh --phase pre        # Create event in specific phase
+    
+    # Opción 2: Activar el entorno virtual manualmente
+    source venv/bin/activate
+    python seed.py               # Seed data with default phase (live)
+    python seed.py --reset       # Drop all data and reseed
+    python seed.py --phase pre   # Create event in specific phase
 """
 
 import sys
@@ -127,8 +134,9 @@ def seed_event(db: Session, phase='live'):
         db.add(item)
     
     db.commit()
+    event_id_str = str(event.id)
     print(f"✅ Event created: {event.title}")
-    print(f"   ID: {event.id}")
+    print(f"   ID: {event_id_str}")
     print(f"   Phase: {event.phase}")
     
     return event
@@ -391,11 +399,13 @@ def main():
         # Create participants
         participants = seed_participants(db, event.id, polls, count=10)
         
+        event_id_str = str(event.id)
+        
         print("\n" + "="*80)
         print("🎉 Seed Complete!")
         print("="*80)
         print(f"\n📋 Summary:")
-        print(f"   Event ID: {event.id}")
+        print(f"   Event ID: {event_id_str}")
         print(f"   Event Title: {event.title}")
         print(f"   Phase: {event.phase}")
         print(f"   Polls: {len(polls)} (1 active, 2 draft)")
@@ -403,12 +413,14 @@ def main():
         print(f"\n🔗 Quick Links:")
         print(f"   Backend: http://localhost:8080/api/health")
         print(f"   Swagger: http://localhost:8080/api/swagger")
-        print(f"   Event API: http://localhost:8080/api/events/{event.id}")
+        print(f"   Event API: http://localhost:8080/api/events/{event_id_str}")
+        print(f"\n🌐 Frontend Control Panel:")
+        print(f"   http://localhost:5173/events/{event_id_str}/control")
         print(f"\n📝 For Chrome Extension:")
-        print(f"   Set eventId in localStorage: '{event.id}'")
+        print(f"   Set eventId in localStorage: '{event_id_str}'")
         print(f"\n💡 To reseed with different phase:")
-        print(f"   python seed.py --reset --phase pre")
-        print(f"   python seed.py --reset --phase post")
+        print(f"   ./seed.sh --reset --phase pre")
+        print(f"   ./seed.sh --reset --phase post")
         print("\n" + "="*80 + "\n")
         
     except Exception as e:

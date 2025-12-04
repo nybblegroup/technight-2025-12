@@ -140,6 +140,7 @@ technight-2025-12/
 - **Node.js**: >= 20.19.4
 - **npm**: >= 10.0.0
 - **Python**: >= 3.12
+- **Docker** and **Docker Compose** (optional, for PostgreSQL)
 
 Use [nvm](https://github.com/nvm-sh/nvm) to manage Node versions:
 
@@ -148,6 +149,54 @@ nvm use
 ```
 
 The project includes a `.nvmrc` file that automatically sets the correct Node version.
+
+## PostgreSQL con Docker (Recomendado)
+
+El proyecto incluye una configuración de Docker Compose para PostgreSQL. Esto simplifica el setup y asegura un entorno consistente.
+
+### Inicio Rápido
+
+```bash
+# Iniciar PostgreSQL
+npm run docker:up
+
+# Verificar que está corriendo
+docker-compose ps
+
+# Ver logs
+npm run docker:logs
+```
+
+### Configuración
+
+El `docker-compose.yml` está configurado con:
+- **Usuario**: `postgres`
+- **Contraseña**: `mysecretpassword`
+- **Base de datos**: `technightdb-python`
+- **Puerto**: `5432`
+
+El archivo `.env` en `backend/python/` ya está configurado para conectarse a este PostgreSQL.
+
+### Comandos Útiles
+
+```bash
+# Iniciar PostgreSQL
+npm run docker:up
+
+# Detener PostgreSQL
+npm run docker:down
+
+# Ver logs
+npm run docker:logs
+
+# Reiniciar PostgreSQL
+npm run docker:restart
+
+# Eliminar todo (incluyendo datos)
+npm run docker:clean
+```
+
+**📚 Documentación completa:** Ver [DOCKER-SETUP.md](./DOCKER-SETUP.md) para más detalles, troubleshooting y configuración avanzada.
 
 ## Getting Started with Python Backend
 
@@ -194,17 +243,40 @@ pip install -r requirements.txt
 deactivate
 ```
 
-### 2. Configure Environment Variables
+### 2. Setup PostgreSQL
 
-The Python backend uses environment variables from `.env` file:
+**Opción A: Usar Docker (Recomendado)**
 
 ```bash
-# Edit backend/python/.env if needed
-# Default configuration:
+# Desde la raíz del proyecto
+npm run docker:up
+```
+
+El `.env` ya está configurado para conectarse al PostgreSQL de Docker.
+
+**Opción B: PostgreSQL Local**
+
+Si tenés PostgreSQL instalado localmente, configurá el `.env` con tus credenciales:
+
+```bash
+# Edit backend/python/.env
+DATABASE_URL="postgresql://usuario:contraseña@localhost:5432/nombre_db"
 PORT=8080
 ```
 
-### 3. Run the Python Backend
+**⚠️ Importante:** No incluyas `?schema=public` en el `DATABASE_URL` (PostgreSQL no acepta ese parámetro).
+
+### 3. Configure Environment Variables
+
+El archivo `.env` en `backend/python/` debería tener:
+
+```bash
+# Si usás Docker (ya configurado)
+DATABASE_URL="postgresql://postgres:mysecretpassword@localhost:5432/technightdb-python"
+PORT=8080
+```
+
+### 4. Run the Python Backend
 
 ```bash
 # From the project root directory
@@ -215,7 +287,7 @@ cd backend/python
 python3 main.py
 ```
 
-### 4. Verify the Backend is Running
+### 5. Verify the Backend is Running
 
 Open your browser and visit:
 - **Health Check**: http://localhost:8080/api/health

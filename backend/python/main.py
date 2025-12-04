@@ -54,7 +54,11 @@ PORT = int(os.getenv("PORT", 8080))
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",      # Admin dashboard
+        "http://localhost:5173",      # Admin dashboard (default Vite port)
+        "http://localhost:5174",      # Admin dashboard (alternative Vite port)
+        "http://localhost:3000",      # Alternative frontend port
+        "http://127.0.0.1:5173",      # Admin dashboard (127.0.0.1)
+        "http://127.0.0.1:5174",      # Admin dashboard (127.0.0.1 alternative)
         "chrome-extension://*",       # Extension (wildcard)
         "https://meet.google.com"     # Google Meet
     ],
@@ -74,8 +78,30 @@ async def startup_event():
     try:
         create_tables()
         print("✅ Database initialized successfully")
+    except RuntimeError as e:
+        # Database not configured (expected in some scenarios)
+        if "DATABASE_URL" in str(e):
+            print("ℹ️  Database not configured (DATABASE_URL not set)")
+            print("ℹ️  Server will start but database operations will fail")
+            print("ℹ️  To enable database: set DATABASE_URL in .env file")
+        else:
+            print(f"⚠️  Database initialization failed: {e}")
+            print("⚠️  Server will start but database operations may fail")
     except Exception as e:
-        print(f"⚠️  Database initialization failed: {e}")
+        error_str = str(e)
+        # Check for specific common database connection errors
+        if "invalid dsn" in error_str.lower() or "invalid connection option" in error_str.lower():
+            if "schema" in error_str.lower():
+                print("❌ Database connection error: Invalid DATABASE_URL format")
+                print("   PostgreSQL does not accept 'schema' as a connection parameter.")
+                print("   Remove '?schema=public' from your DATABASE_URL.")
+                print("   Correct format: postgresql://user:password@host:port/database")
+                print("   Example: postgresql://postgres:password@localhost:5432/technightdb")
+            else:
+                print(f"❌ Database connection error: {error_str}")
+                print("   Please check your DATABASE_URL format in .env file")
+        else:
+            print(f"⚠️  Database initialization failed: {error_str}")
         print("⚠️  Server will start but database operations may fail")
 
 
@@ -352,6 +378,9 @@ async def update_poll_status(
     # Get event
     event = db.query(Event).filter(Event.id == poll.event_id).first()
     
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
     # Validate transitions
     if status_data.status == 'active':
         # Can only launch if event is LIVE
@@ -590,6 +619,8 @@ async def get_participants(
         Participant.event_id == event_id
     ).order_by(desc(Participant.points)).all()
     
+    # Convert badges from JSONB dicts to Badge objects for serialization
+    # FastAPI/Pydantic will handle the conversion automatically with from_attributes=True
     return participants
 
 
@@ -790,6 +821,10 @@ async def submit_feedback(
     
     # Verify event is in POST phase
     event = db.query(Event).filter(Event.id == participant.event_id).first()
+    
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
     if event.phase != 'post':
         raise HTTPException(
             status_code=400,

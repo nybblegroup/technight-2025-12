@@ -32,8 +32,21 @@ export function EventControl() {
     return () => clearInterval(interval);
   }, [eventId]);
 
+  // Validate UUID format
+  function isValidUUID(uuid: string): boolean {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+  }
+
   async function loadData(silent = false) {
     if (!eventId) return;
+
+    // Validate UUID format before making API call
+    if (!isValidUUID(eventId)) {
+      setError(`UUID inválido: "${eventId}". El formato debe ser: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`);
+      setLoading(false);
+      return;
+    }
 
     try {
       if (!silent) {
@@ -56,7 +69,19 @@ export function EventControl() {
       setError(null);
     } catch (err) {
       console.error('Error loading data:', err);
-      setError(err instanceof Error ? err.message : 'Error al cargar datos');
+      let errorMessage = 'Error al cargar datos';
+      
+      if (err instanceof Error) {
+        if (err.message.includes('422') || err.message.includes('uuid_parsing')) {
+          errorMessage = `UUID inválido: "${eventId}". Verificá que el Event ID sea correcto.`;
+        } else if (err.message.includes('404')) {
+          errorMessage = `Evento no encontrado. El Event ID "${eventId}" no existe en la base de datos.`;
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -105,7 +130,25 @@ export function EventControl() {
       <div className="event-control-error">
         <h2>⚠️ Error</h2>
         <p>{error || 'Evento no encontrado'}</p>
-        <button onClick={() => loadData()}>Reintentar</button>
+        <div style={{ marginTop: '20px', padding: '16px', background: '#1A1A1F', borderRadius: '8px' }}>
+          <p style={{ marginBottom: '12px', fontWeight: 'bold' }}>💡 Solución:</p>
+          <ol style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+            <li>Ejecutá el seed script para obtener un Event ID válido:</li>
+            <code style={{ 
+              display: 'block', 
+              margin: '8px 0', 
+              padding: '8px', 
+              background: '#0D0D0F', 
+              borderRadius: '4px' 
+            }}>
+              cd backend/python<br />
+              ./seed.sh --reset
+            </code>
+            <li>Copiá el Event ID completo que se muestra en la consola</li>
+            <li>Usá la URL completa: <code>http://localhost:5173/events/[EVENT_ID]/control</code></li>
+          </ol>
+        </div>
+        <button onClick={() => loadData()} style={{ marginTop: '16px' }}>Reintentar</button>
       </div>
     );
   }

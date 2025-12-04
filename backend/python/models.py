@@ -34,7 +34,7 @@ class Event(Base):
     calendar_event_id = Column(String(255))
     transcript_url = Column(Text)
     transcript_text = Column(Text)
-    settings = Column(JSONB, default={})
+    settings = Column(JSONB, default=lambda: {})
     created_by = Column(UUID(as_uuid=True), nullable=False, default=uuid.uuid4)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -158,8 +158,8 @@ class Participant(Base):
     attendance_percent = Column(Integer, default=0)
     
     # Engagement data (stored as JSONB for flexibility)
-    reactions = Column(JSONB, default=[])
-    questions = Column(JSONB, default=[])
+    reactions = Column(JSONB, default=lambda: [])
+    questions = Column(JSONB, default=lambda: [])
     poll_votes_count = Column(Integer, default=0)
     
     # Feedback
@@ -169,7 +169,7 @@ class Participant(Base):
     
     # Gamification
     points = Column(Integer, default=0, nullable=False)
-    badges = Column(JSONB, default=[])
+    badges = Column(JSONB, default=lambda: [])
     rank = Column(Integer)
     
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

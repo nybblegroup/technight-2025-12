@@ -176,6 +176,20 @@ class PollVoteResponse(BaseModel):
 # Participant Schemas
 # ============================================================================
 
+class Badge(BaseModel):
+    id: str
+    name: str
+    icon: str
+    earned_at: str
+    
+    class Config:
+        from_attributes = True
+        # Allow JSONB dicts to be converted to Badge objects
+        json_encoders = {
+            dict: lambda v: v if isinstance(v, dict) else {}
+        }
+
+
 class ParticipantBase(BaseModel):
     display_name: str = Field(..., min_length=1, max_length=255)
 
@@ -213,7 +227,7 @@ class ParticipantStats(BaseModel):
     reactions_count: int
     questions_count: int
     polls_voted: int
-    badges: List[str] = []
+    badges: List[Badge] = []
 
 
 class ParticipantResponse(ParticipantBase):
@@ -223,7 +237,16 @@ class ParticipantResponse(ParticipantBase):
     join_time: Optional[datetime] = None
     points: int = 0
     rank: Optional[int] = None
-    badges: List[str] = []
+    badges: List[Badge] = []
+    
+    @validator('badges', pre=True)
+    def validate_badges(cls, v):
+        """Convert JSONB dicts to Badge objects"""
+        if v is None:
+            return []
+        if isinstance(v, list):
+            return [Badge(**badge) if isinstance(badge, dict) else badge for badge in v]
+        return v
     
     class Config:
         from_attributes = True

@@ -135,6 +135,13 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> 
     return await response.json();
   } catch (error) {
     if (error instanceof Error) {
+      // Improve error messages for common network issues
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error(
+          `No se pudo conectar al backend. Verificá que el servidor esté corriendo en ${API_BASE_URL}. ` +
+          `Ejecutá: cd backend/python && ./seed.sh (o python3 main.py)`
+        );
+      }
       throw error;
     }
     throw new Error('An unknown error occurred');
