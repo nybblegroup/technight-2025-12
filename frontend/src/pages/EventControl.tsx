@@ -112,7 +112,6 @@ export function EventControl() {
 
   const activePoll = polls.find(p => p.status === 'active');
   const draftPolls = polls.filter(p => p.status === 'draft');
-  const closedPolls = polls.filter(p => p.status === 'closed');
   const top3 = participants.slice(0, 3);
 
   return (
